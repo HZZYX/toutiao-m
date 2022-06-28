@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <h1>黑马头条</h1>
     <router-view />
   </div>
 </template>
@@ -11,4 +10,11 @@ export default {
 }
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.box {
+  width: 100px;
+  font-size: 15px;
+  height: 100px;
+  border: 1px solid red;
+}
+</style>
