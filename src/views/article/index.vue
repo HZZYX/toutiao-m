@@ -47,7 +47,11 @@
             v-html="article.content"
           ></div>
           <van-divider>正文结束</van-divider>
-          <articleComment :source="article.art_id" />
+          <articleComment
+            :source="article.art_id"
+            @setTotal="totalComment = $event"
+            ref="listRef"
+          />
         </div>
 
         <template v-else>
@@ -71,15 +75,40 @@
 
     <!-- 底部区域 -->
     <div class="article-bottom" v-if="article.title">
-      <van-button class="comment-btn" type="default" round size="small"
+      <van-button
+        class="comment-btn"
+        type="default"
+        round
+        size="small"
+        @click="isPostShow = true"
         >写评论</van-button
       >
-      <van-icon name="comment-o" badge="123" color="#777" />
-      <collectArticle v-model="article.is_collected" :articleId="article.art_id" />
+      <van-icon name="comment-o" :badge="totalComment" color="#777" />
+      <collectArticle
+        v-model="article.is_collected"
+        :articleId="article.art_id"
+      />
       <likeArticle v-model="article.attitude" :articleId="article.art_id" />
       <van-icon name="share" color="#777777"></van-icon>
     </div>
     <!-- /底部区域 -->
+
+    <!-- 发布评论 -->
+    <van-popup v-model="isPostShow" position="bottom">
+      <comment-post
+        :target="article.art_id"
+        @success="onSuccess"
+      ></comment-post>
+    </van-popup>
+
+    <van-popup v-model="isReplyShow" position="bottom" style="height: 100%">
+      <comment-reply
+        v-if="isReplyShow"
+        :comment="currentComment"
+        @close="isReplyShow = false"
+      />
+    </van-popup>
+    <!-- /评论回复 -->
   </div>
 </template>
 
@@ -92,9 +121,11 @@ import followUser from '@/components/article/follow-user.vue'
 import likeArticle from '@/components/article/like-article.vue'
 import collectArticle from '@/components/article/collect-article.vue'
 import articleComment from './components/articleComment.vue'
+import commentPost from './components/comment-post.vue'
+import commentReply from './components/comment-reply.vue'
 export default {
   name: 'ArticleIndex',
-  components: { followUser, likeArticle, collectArticle, articleComment },
+  components: { followUser, likeArticle, collectArticle, articleComment, commentPost, commentReply },
   props: {
     articleId: {
       type: [Number, String],
@@ -105,7 +136,11 @@ export default {
     return {
       article: {},
       isLoading: true,
-      errorStatus: ''
+      errorStatus: '',
+      totalComment: 0,
+      isPostShow: false, // 新增评论弹出显示
+      isReplyShow: false,
+      currentComment: {}
     }
   },
   computed: {},
@@ -114,7 +149,25 @@ export default {
     this.getArticleDetail()
   },
   mounted () {},
+  // 提供给子组件
+  provide () {
+    return {
+      articleIndex: this
+    }
+  },
   methods: {
+    onReplyShow (item) {
+      // 显示弹层
+      this.isReplyShow = true
+      // 保存查看的评论
+      this.currentComment = item
+    },
+    onSuccess (item) {
+      // 关闭弹层
+      this.isPostShow = false
+      // 把新的评论添加到列表里面
+      this.$refs.listRef.list.unshift(item)
+    },
     async getArticleDetail () {
       try {
         // if (Math.random() > 0.5) {

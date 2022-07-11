@@ -14,7 +14,7 @@
         <div class="left">
           <van-image
             class="avatar"
-            src="https://img.alicdn.com/imgextra/i4/O1CN01lWBOlQ1NatIUxe3Hl_!!6000000001587-54-tps-140-160.apng"
+            :src="userInfo.photo"
             round
             fit="cover"
           />

@@ -13,7 +13,7 @@
       rows="2"
       autosize
       type="textarea"
-      maxlength="7"
+      maxlength="10"
       placeholder="请输入新昵称"
       show-word-limit
     ></van-field>

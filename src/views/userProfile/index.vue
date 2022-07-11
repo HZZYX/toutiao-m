@@ -1,7 +1,5 @@
 <template>
   <div class="user-profile">
-    <input type="file" hidden ref="inputFile" @change="inputChange" />
-
     <!-- 导航栏 -->
     <van-nav-bar
       class="page-nav-bar"
@@ -9,11 +7,14 @@
       left-arrow
       @click-left="$router.back()"
     />
+
     <!-- /导航栏 -->
+    <input type="file" hidden ref="inputFile" @change="inputChange" />
     <van-cell title="头像" is-link @click="$refs.inputFile.click()">
       <van-image class="avatar" fit="cover" round :src="user.photo" />
     </van-cell>
 
+    <!-- 昵称 -->
     <van-cell
       title="昵称"
       :value="user.name"
@@ -21,8 +22,15 @@
       @click="isShowUpdateName = true"
     />
 
-    <van-cell title="性别" :value="user.gender ? '女' : '男'" is-link />
+    <!-- 性别 -->
+    <van-cell
+      title="性别"
+      :value="user.gender === 0 ? '男' : '女'"
+      is-link
+      @click="isUpdateGenderShow = true"
+    />
 
+    <!-- 生日 -->
     <van-cell
       title="生日"
       :value="user.birthday || '1997-00-00'"
@@ -52,16 +60,30 @@
       <updateBirthdy
         @close="isShowUpdateBirthdy = false"
         v-model="user.birthday"
-        :value="user.birthday"
+        v-if="isShowUpdateBirthdy"
       ></updateBirthdy>
     </van-popup>
 
+    <!-- 编辑头像的弹出层 -->
     <van-popup
       v-model="isShowUpdateAvatar"
       style="height: 100%"
       position="bottom"
     >
-      <updateAvatar :imgUrl="imgUrl" />
+      <updateAvatar
+        @update-avatar="user.photo = $event"
+        @close="isShowUpdateAvatar = false"
+        :imgUrl="imgUrl"
+      />
+    </van-popup>
+
+    <!-- 编辑性别 -->
+    <van-popup v-model="isUpdateGenderShow" position="bottom">
+      <update-gender
+        v-if="isUpdateGenderShow"
+        v-model="user.gender"
+        @close="isUpdateGenderShow = false"
+      />
     </van-popup>
   </div>
 </template>
@@ -71,6 +93,7 @@ import { getUserProfile } from '@/api/user'
 import updateName from './components/update-name.vue'
 import updateBirthdy from './components/updateBirthdy.vue'
 import updateAvatar from './components/update-avatar'
+import updateGender from './components/update-gender.vue'
 export default {
   name: 'userProfile',
   data () {
@@ -79,13 +102,15 @@ export default {
       isShowUpdateName: false,
       isShowUpdateBirthdy: false,
       isShowUpdateAvatar: false,
-      imgUrl: ''
+      imgUrl: '',
+      isUpdateGenderShow: false
     }
   },
   components: {
     updateName,
     updateBirthdy,
-    updateAvatar
+    updateAvatar,
+    updateGender
   },
   created () {
     this.loadProfile()
@@ -105,7 +130,6 @@ export default {
       const file = this.$refs.inputFile.files[0]
       // 获取blob数据
       this.imgUrl = window.URL.createObjectURL(file)
-      console.log(this.imgUrl)
       this.isShowUpdateAvatar = true
       this.$refs.inputFile.value = ''
     }

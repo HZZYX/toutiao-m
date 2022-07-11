@@ -6,26 +6,15 @@
       :finished="finished"
       finished-text="没有更多了"
       @load="onLoad"
+      :immediate-check="false"
     >
-      <van-cell v-for="(item,index) in list" :key="index" :title="item.aut_name">
-        <van-image
-          slot="icon"
-          round
-          width="30"
-          height="30"
-          style="margin-right: 10px"
-          :src="item.aut_photo"
-        />
-        <span style="color: #466b9d" slot="title">hello</span>
-        <div slot="label">
-          <p style="color: #363636">{{item.aut_name}}</p>
-          <p>
-            <span style="margin-right: 10px">{{item.content}}</span>
-            <van-button size="mini" type="default">{{item.pubdate}}</van-button>
-          </p>
-        </div>
-        <van-icon slot="right-icon" name="like-o" />
-      </van-cell>
+      <comment-item
+        v-for="(item, index) in list"
+        :key="index"
+        :item="item"
+        :isReply="isReply"
+        @revampLiking="item.is_liking = $event"
+      />
     </van-list>
     <!-- 评论列表 -->
 
@@ -41,13 +30,21 @@
 
 <script>
 import { getComments } from '@/api/comment'
-
+import commentItem from './comment-item.vue'
 export default {
   name: 'ArticleComment',
   props: {
     source: {
       type: [String, Number],
       required: true
+    },
+    type: {
+      type: String,
+      default: 'a'
+    },
+    isReply: {
+      type: Boolean,
+      default: true
     }
   },
   data () {
@@ -58,28 +55,35 @@ export default {
       offset: undefined
     }
   },
+  components: { commentItem },
   created () {
     this.onLoad()
+    this.$bus.$on('onPostSucces', data => {
+      // this.list.unshift(data)
+    })
   },
   methods: {
     async onLoad () {
       // 1.发送请求
       try {
-        const { last_id: offet, results, total_count: total } = await getComments({
-          type: 'a',
+        const res = await getComments({
+          type: this.type,
           source: this.source,
-          offet: this.offset,
+          offset: this.offset,
           limit: 10
         })
         // 2.追加数据
-        this.offset = offet
-        this.list.push(...results)
-        this.$emit('set-total', total)
+        this.list.push(...res.results)
+        this.$emit('setTotal', res.total_count)
         // 3.改变状态值
         this.loading = false
-        // 4.判断是否结束
-        if (results.length === 0) {
+        // 4. 判断是否还有数据
+        if (res.results.length === 0 || this.list.length >= res.total_count) {
+          // 没有就将 finished 设置结束
           this.finished = true
+        } else {
+          // 有就更新获取下一页的数据页码
+          this.offset = res.last_id
         }
       } catch (error) {
         console.log(error)
